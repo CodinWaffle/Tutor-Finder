@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 col-12">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">
+                        <i class="fas fa-chalkboard-teacher me-2"></i>My Tutors
+                    </h4>
+
+                    {% if current_user.tutors %}
+                        <div class="tutor-list">
+                            {% for relation in current_user.tutors %}
+                                <div class="tutor-item d-flex align-items-center justify-content-between p-3 bg-light rounded-3 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ url_for('static', filename=relation.tutor.profile_pic or 'default_profile.png') }}" 
+                                             class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                        <div>
+                                            <h6 class="mb-1">{{ relation.tutor.username }}</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-book me-1"></i>{{ relation.tutor.subjects }}
+                                            </small>
+                                            {% if relation.status == 'pending' %}
+                                                <span class="badge bg-warning ms-2">Pending</span>
+                                            {% elif relation.status == 'accepted' %}
+                                                <span class="badge bg-success ms-2">Accepted</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ url_for('main.tutor_profile', tutor_id=relation.tutor.id) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                        {% if relation.status == 'accepted' %}
+                                            <button class="btn btn-outline-danger btn-sm" 
+                                                    onclick="confirmRemoveTutor('{{ relation.id }}')">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-3">You haven't requested any tutors yet.</p>
+                            <a href="{{ url_for('main.newsfeed') }}" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Find Tutors
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remove Tutor Modal -->
+<div class="modal fade" id="removeTutorModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">Remove Tutor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove this tutor?</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="removeTutorForm" method="POST" action="" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Remove</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmRemoveTutor(relationId) {
+    const modal = new bootstrap.Modal(document.getElementById('removeTutorModal'));
+    const form = document.getElementById('removeTutorForm');
+    form.action = "{{ url_for('main.remove_tutor', relation_id=0) }}".replace('0', relationId);
+    modal.show();
+}
+</script>
+{% endblock %} 

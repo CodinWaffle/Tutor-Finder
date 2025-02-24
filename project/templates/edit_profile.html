@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container profile-container">
+    <div class="edit-form-section">
+        <h2 class="mb-4">Edit Profile</h2>
+        
+        <form method="POST" action="{{ url_for('main.edit_profile') }}">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               value="{{ current_user.username }}" required>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ current_user.email }}" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" 
+                               value="{{ current_user.phone }}">
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="address">Location</label>
+                        <input type="text" class="form-control" id="address" name="address" 
+                               value="{{ current_user.address }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="bio">Bio</label>
+                <textarea class="form-control" id="bio" name="bio" rows="4">{{ current_user.bio }}</textarea>
+            </div>
+
+            {% if current_user.is_tutor %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="subjects">Subjects (comma-separated)</label>
+                        <input type="text" class="form-control" id="subjects" name="subjects" 
+                               value="{{ current_user.subjects }}">
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="hourly_rate">Hourly Rate (₱)</label>
+                        <input type="number" step="0.01" class="form-control" id="hourly_rate" 
+                               name="hourly_rate" value="{{ current_user.hourly_rate }}">
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="new_password">New Password (leave blank to keep current)</label>
+                <input type="password" class="form-control" id="new_password" name="new_password">
+            </div>
+
+            <div class="profile-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <a href="{{ url_for('main.profile') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,571 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-11 col-12">
+            <!-- Tutor Profile Card -->
+            <div class="card border-0 shadow-sm rounded-3 mb-4">
+                <!-- Cover Background -->
+                <div class="bg-gradient-primary" style="height: 120px;"></div>
+                
+                <div class="card-body px-4 pb-4">
+                    <div class="row">
+                        <!-- Profile Info Column -->
+                        <div class="col-lg-4">
+                            <div class="text-center position-relative" style="margin-top: -60px;">
+                                <img src="{{ url_for('static', filename=tutor.profile_pic or 'default_profile.png') }}" 
+                                     class="rounded-circle border border-4 border-white shadow-sm" 
+                                     style="width: 120px; height: 120px; object-fit: cover;">
+                                {% if tutor.is_verified %}
+                                    <div class="verified-badge">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Info Column -->
+                        <div class="col-lg-8">
+                            <!-- Tutor info content -->
+                            <h4 class="mb-1">{{ tutor.username }}</h4>
+                            
+                            <!-- Badges -->
+                            <div class="mb-2">
+                                <span class="badge bg-primary rounded-pill px-3">
+                                    <i class="fas fa-chalkboard-teacher me-1"></i> Tutor
+                                </span>
+                            </div>
+
+                            <!-- Rating Section -->
+                            <div class="rating-section mb-3">
+                                {% set rating = tutor.average_rating %}
+                                <div class="stars">
+                                    {% for _ in range(5) %}
+                                        {% if loop.index <= rating|round(0, 'floor') %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <span class="text-muted small">
+                                    {{ "%.1f"|format(rating) }} ({{ tutor.ratings_received|length }} reviews)
+                                </span>
+                            </div>
+                            
+                            <!-- Bio -->
+                            <p class="text-muted mb-4">{{ tutor.bio or 'No bio available' }}</p>
+
+                            <!-- Quick Stats -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-4">
+                                    <div class="p-3 rounded-3 bg-light text-center">
+                                        <h5 class="mb-1">
+                                            {{ tutor.tutees|selectattr('status', 'equalto', 'accepted')|list|length }}
+                                            {% set pending = tutor.tutees|selectattr('status', 'equalto', 'pending')|list|length %}
+                                            {% if pending > 0 %}
+                                                <small class="text-muted">(+{{ pending }} pending)</small>
+                                            {% endif %}
+                                        </h5>
+                                        <small class="text-muted">Students</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-3 rounded-3 bg-light text-center">
+                                        <div class="info-item">
+                                            <i class="fas fa-money-bill text-success me-2"></i>
+                                            <span>₱{{ "%.2f"|format(tutor.hourly_rate or 0) }}/hour</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-3 rounded-3 bg-light text-center">
+                                        <h5 class="mb-1">{{ tutor.created_at.strftime('%b %Y') }}</h5>
+                                        <small class="text-muted">Joined</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Subjects -->
+                            {% if tutor.subjects %}
+                            <div class="subjects-section mb-4">
+                                <h6 class="text-muted mb-3">Subjects</h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for subject in tutor.subjects.split(',') %}
+                                        <span class="badge bg-light text-dark px-3 py-2">
+                                            <i class="fas fa-book me-2"></i>{{ subject.strip() }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Update the request button section -->
+                            <div class="d-flex justify-content-center gap-3 mb-4">
+                                {% if current_user.id != tutor.id %}
+                                    {% if not current_user.is_tutor %}
+                                        {% set tutor_relation = current_user.tutors|selectattr('tutor_id', 'equalto', tutor.id)|first %}
+                                        {% if tutor_relation %}
+                                            {% if tutor_relation.status == 'pending' %}
+                                                <button class="btn btn-warning" disabled>
+                                                    <i class="fas fa-clock me-2"></i>Request Pending
+                                                </button>
+                                            {% elif tutor_relation.status == 'accepted' %}
+                                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ratingModal">
+                                                    <i class="fas fa-star me-2"></i>Rate Tutor
+                                                </button>
+                                                <a href="{{ url_for('main.conversation', user_id=tutor.id) }}" 
+                                                   class="btn btn-outline-primary">
+                                                    <i class="fas fa-comment me-2"></i>Message
+                                                </a>
+                                            {% else %}
+                                                <button class="btn btn-secondary" disabled>
+                                                    <i class="fas fa-ban me-2"></i>Cannot Request Again
+                                                </button>
+                                            {% endif %}
+                                        {% else %}
+                                            <a href="{{ url_for('main.request_tutor', tutor_id=tutor.id) }}" 
+                                               class="btn btn-primary">
+                                                <i class="fas fa-user-plus me-2"></i>Request Tutor
+                                            </a>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews Section in a Separate Card -->
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="mb-0">
+                            <i class="fas fa-star text-warning me-2"></i>Recent Reviews
+                        </h5>
+                        <div class="overall-rating">
+                            <span class="h4 mb-0 me-2">{{ "%.1f"|format(tutor.average_rating or 0) }}</span>
+                            <div class="stars d-inline-block">
+                                {% for _ in range((tutor.average_rating or 0)|int) %}
+                                    <i class="fas fa-star text-warning"></i>
+                                {% endfor %}
+                                {% if (tutor.average_rating or 0) % 1 >= 0.5 %}
+                                    <i class="fas fa-star-half-alt text-warning"></i>
+                                {% endif %}
+                                {% for _ in range(5 - ((tutor.average_rating or 0)|round|int)) %}
+                                    <i class="far fa-star text-warning"></i>
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">({{ tutor.ratings_received|length }} reviews)</small>
+                        </div>
+                    </div>
+
+                    {% if tutor.ratings_received %}
+                        <div class="reviews-grid">
+                            {% for rating in tutor.ratings_received[:3] %}
+                                <div class="review-card bg-light rounded-3 p-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ url_for('static', filename=rating.student.profile_pic or 'default_profile.png') }}" 
+                                                 class="rounded-circle me-2" 
+                                                 style="width: 40px; height: 40px; object-fit: cover;">
+                                            <div>
+                                                <h6 class="mb-0">{{ rating.student.username }}</h6>
+                                                <div class="stars">
+                                                    {% for _ in range(rating.rating) %}
+                                                        <i class="fas fa-star text-warning"></i>
+                                                    {% endfor %}
+                                                    {% for _ in range(5 - rating.rating) %}
+                                                        <i class="far fa-star text-warning"></i>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">
+                                            {{ rating.created_at.strftime('%b %d, %Y') }}
+                                        </small>
+                                    </div>
+                                    <p class="mb-0 text-muted">{{ rating.comment }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        {% if tutor.ratings_received|length > 3 %}
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#allReviewsModal">
+                                    View All Reviews
+                                </button>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">No reviews yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- All Reviews Modal -->
+<div class="modal fade" id="allReviewsModal" tabindex="-1" role="dialog" aria-labelledby="allReviewsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="allReviewsModalLabel">All Reviews for {{ tutor.username }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {% for rating in tutor.ratings_received %}
+                <div class="review-card mb-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ url_for('static', filename=rating.student.profile_pic or 'default_profile.png') }}" 
+                                 class="rounded-circle me-2" 
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                            <div>
+                                <h6 class="mb-0">{{ rating.student.username }}</h6>
+                                <div class="stars">
+                                    {% for _ in range(rating.rating) %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% endfor %}
+                                    {% for _ in range(5 - rating.rating) %}
+                                        <i class="far fa-star text-warning"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            {{ rating.created_at.strftime('%b %d, %Y') }}
+                        </small>
+                    </div>
+                    <p class="mb-0 mt-2 text-muted">{{ rating.comment }}</p>
+                    <hr class="my-3">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Message Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">Message {{ tutor.username }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('main.send_message', recipient_id=tutor.id) }}" method="POST">
+                    <div class="mb-3">
+                        <textarea class="form-control" name="message" rows="4" 
+                                  placeholder="Type your message here..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-paper-plane me-2"></i>Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update the CSS -->
+<style>
+.success-text, .default-text {
+    transition: all 0.3s ease-in-out;
+}
+
+.success-text {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.btn-requested .success-text {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.btn-requested .default-text {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.btn-requested {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    transition: all 0.3s ease-in-out !important;
+}
+
+@keyframes checkmark {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.btn-requested .fa-check {
+    animation: checkmark 0.5s ease-in-out;
+}
+
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.rating-input input {
+    display: none;
+}
+
+.rating-input label {
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #ffc107;
+    margin: 0 2px;
+}
+
+.rating-input label:hover,
+.rating-input label:hover ~ label,
+.rating-input input:checked ~ label {
+    color: #ffc107;
+}
+
+.rating-input label:hover i,
+.rating-input label:hover ~ label i,
+.rating-input input:checked ~ label i {
+    content: "\f005";
+    font-weight: 900;
+}
+
+.review-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.rating-input input {
+    display: none;
+}
+
+.rating-input label {
+    cursor: pointer;
+    color: #ddd;
+    transition: color 0.2s;
+}
+
+.rating-input label:hover,
+.rating-input label:hover ~ label,
+.rating-input input:checked ~ label {
+    color: #ffc107;
+}
+
+.rating-input label:hover i,
+.rating-input label:hover ~ label i,
+.rating-input input:checked ~ label i {
+    content: "\f005";
+    font-weight: 900;
+}
+
+.modal-content {
+    border: none;
+    border-radius: 1rem;
+}
+
+.modal-header {
+    border-radius: 1rem 1rem 0 0;
+}
+
+.btn-close {
+    background: none;
+    font-size: 1.5rem;
+    color: #6c757d;
+}
+
+.btn-close:hover {
+    color: #343a40;
+}
+
+/* Add these styles to improve the layout */
+.reviews-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.review-card {
+    height: 100%;
+    transition: transform 0.2s;
+}
+
+.review-card:hover {
+    transform: translateY(-2px);
+}
+
+.verified-badge {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: #28a745;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+}
+</style>
+
+<!-- Update the JavaScript -->
+<script>
+function handleRequest(url) {
+    const button = document.getElementById('requestButton');
+    if (button.disabled) return;
+    
+    button.disabled = true;
+    button.classList.add('btn-requested');
+    
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.redirected) {
+            setTimeout(() => {
+                window.location.href = response.url;
+            }, 1500);
+        } else {
+            throw new Error('Network response was not ok');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        button.disabled = false;
+        button.classList.remove('btn-requested');
+        alert('An error occurred while processing the request');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize star rating functionality
+    const ratingInputs = document.querySelectorAll('.rating-input');
+    
+    ratingInputs.forEach(ratingInput => {
+        const labels = ratingInput.querySelectorAll('label');
+        
+        labels.forEach(label => {
+            // Hover effect
+            label.addEventListener('mouseover', function() {
+                const star = this.querySelector('i');
+                star.classList.remove('far');
+                star.classList.add('fas');
+                
+                // Also affect previous stars
+                let prev = this.previousElementSibling;
+                while (prev && prev.tagName === 'LABEL') {
+                    prev.querySelector('i').classList.remove('far');
+                    prev.querySelector('i').classList.add('fas');
+                    prev = prev.previousElementSibling;
+                }
+            });
+            
+            // Mouse out effect
+            label.addEventListener('mouseout', function() {
+                if (!this.previousElementSibling || !this.previousElementSibling.checked) {
+                    const stars = ratingInput.querySelectorAll('i');
+                    stars.forEach(star => {
+                        star.classList.remove('fas');
+                        star.classList.add('far');
+                    });
+                    
+                    // Keep selected stars filled
+                    const checkedInput = ratingInput.querySelector('input:checked');
+                    if (checkedInput) {
+                        let currentLabel = checkedInput.nextElementSibling;
+                        while (currentLabel) {
+                            currentLabel.querySelector('i').classList.remove('far');
+                            currentLabel.querySelector('i').classList.add('fas');
+                            currentLabel = currentLabel.nextElementSibling;
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Handle radio button changes
+        const inputs = ratingInput.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('change', function() {
+                const stars = ratingInput.querySelectorAll('i');
+                stars.forEach(star => {
+                    star.classList.remove('fas');
+                    star.classList.add('far');
+                });
+                
+                let currentLabel = this.nextElementSibling;
+                while (currentLabel) {
+                    currentLabel.querySelector('i').classList.remove('far');
+                    currentLabel.querySelector('i').classList.add('fas');
+                    currentLabel = currentLabel.nextElementSibling;
+                }
+            });
+        });
+    });
+});
+</script>
+
+<!-- Rating Modal -->
+<div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ratingModalLabel">Rate {{ tutor.username }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('main.rate_tutor', tutor_id=tutor.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Rating</label>
+                        <div class="rating-stars">
+                            {% for i in range(5, 0, -1) %}
+                            <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" required>
+                            <label for="star{{ i }}"><i class="fas fa-star"></i></label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Comment</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Submit Rating</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

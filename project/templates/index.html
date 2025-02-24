@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Welcome Section with Stats -->
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{{ url_for('static', filename=current_user.profile_pic or 'default_profile.png') }}" 
+                             class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                        <div>
+                            <h3 class="card-title mb-1">Welcome, {{ current_user.username }}!</h3>
+                            <span class="badge {% if current_user.is_tutor %}bg-primary{% else %}bg-info{% endif %} rounded-pill">
+                                <i class="fas {% if current_user.is_tutor %}fa-chalkboard-teacher{% else %}fa-user-graduate{% endif %} me-1"></i>
+                                {% if current_user.is_tutor %}Tutor{% else %}Student{% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="row g-3">
+                        {% if current_user.is_tutor %}
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 bg-light rounded-3 text-center">
+                                    <h3 class="mb-1">{{ current_user.tutees|length }}</h3>
+                                    <small class="text-muted">Total Students</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 bg-light rounded-3 text-center">
+                                    <h3 class="mb-1">{{ "%.1f"|format(current_user.average_rating or 0) }}</h3>
+                                    <small class="text-muted">Average Rating</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 bg-light rounded-3 text-center">
+                                    <h3 class="mb-1">₱{{ "%.0f"|format(current_user.hourly_rate or 0) }}</h3>
+                                    <small class="text-muted">Hourly Rate</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 bg-light rounded-3 text-center">
+                                    <h3 class="mb-1">{{ current_user.ratings_received|length }}</h3>
+                                    <small class="text-muted">Reviews</small>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="col-md-4 col-6">
+                                <div class="p-3 bg-light rounded-3 text-center">
+                                    <h3 class="mb-1">{{ current_user.tutors|length }}</h3>
+                                    <small class="text-muted">My Tutors</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-6">
+                                <div class="p-3 bg-light rounded-3 text-center">
+                                    <h3 class="mb-1">{{ current_user.ratings_given|length }}</h3>
+                                    <small class="text-muted">Reviews Given</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-12">
+                                <div class="p-3 bg-light rounded-3 text-center">
+                                    <a href="{{ url_for('main.newsfeed') }}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-search me-1"></i>Find Tutors
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="col-md-8">
+            {% if current_user.is_tutor %}
+                <!-- Tutor: Recent Student Requests -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-user-plus me-2"></i>Recent Student Requests</span>
+                            <a href="{{ url_for('main.my_students') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                        </h5>
+                        {% if current_user.tutees %}
+                            <div class="list-group list-group-flush">
+                            {% for relation in current_user.tutees[:5] %}
+                                <div class="list-group-item border-0 px-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ url_for('static', filename=relation.student.profile_pic or 'default_profile.png') }}" 
+                                                 class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                            <div>
+                                                <h6 class="mb-0">{{ relation.student.username }}</h6>
+                                                <small class="text-muted">Status: {{ relation.status }}</small>
+                                            </div>
+                                        </div>
+                                        {% if relation.status == 'pending' %}
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('main.accept_request', request_id=relation.id) }}" 
+                                                   class="btn btn-success">Accept</a>
+                                                <a href="{{ url_for('main.reject_request', request_id=relation.id) }}" 
+                                                   class="btn btn-danger">Reject</a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center my-4">No pending student requests.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <!-- Student: My Tutors -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-chalkboard-teacher me-2"></i>My Tutors</span>
+                            <a href="{{ url_for('main.my_tutors') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                        </h5>
+                        {% if current_user.tutors %}
+                            <div class="list-group list-group-flush">
+                            {% for relation in current_user.tutors[:5] %}
+                                <div class="list-group-item border-0 px-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ url_for('static', filename=relation.tutor.profile_pic or 'default_profile.png') }}" 
+                                                 class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                            <div>
+                                                <h6 class="mb-0">{{ relation.tutor.username }}</h6>
+                                                <small class="text-muted">{{ relation.tutor.subjects }}</small>
+                                            </div>
+                                        </div>
+                                        <a href="{{ url_for('main.tutor_profile', tutor_id=relation.tutor.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">View Profile</a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p class="text-muted mb-3">You haven't requested any tutors yet.</p>
+                                <a href="{{ url_for('main.newsfeed') }}" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Find Tutors
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('main.edit_profile') }}" class="list-group-item list-group-item-action border-0 px-0">
+                            <i class="fas fa-user-edit me-2"></i>Edit Profile
+                        </a>
+                        <a href="{{ url_for('main.messages') }}" class="list-group-item list-group-item-action border-0 px-0">
+                            <i class="fas fa-envelope me-2"></i>Messages
+                        </a>
+                        {% if current_user.is_tutor %}
+                            <a href="{{ url_for('main.my_students') }}" class="list-group-item list-group-item-action border-0 px-0">
+                                <i class="fas fa-users me-2"></i>My Students
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('main.newsfeed') }}" class="list-group-item list-group-item-action border-0 px-0">
+                                <i class="fas fa-search me-2"></i>Find Tutors
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-clock me-2"></i>Recent Activity</h5>
+                    <div class="timeline">
+                        {% if current_user.is_tutor %}
+                            {% for rating in current_user.ratings_received[-3:]|reverse %}
+                                <div class="timeline-item">
+                                    <small class="text-muted">{{ rating.created_at.strftime('%b %d, %Y') }}</small>
+                                    <p class="mb-0">New review from {{ rating.student.username }}</p>
+                                </div>
+                            {% else %}
+                                <p class="text-muted text-center my-3">No recent activity</p>
+                            {% endfor %}
+                        {% else %}
+                            {% for relation in current_user.tutors[-3:]|reverse %}
+                                <div class="timeline-item">
+                                    <small class="text-muted">{{ relation.created_at.strftime('%b %d, %Y') }}</small>
+                                    <p class="mb-0">Connected with {{ relation.tutor.username }}</p>
+                                </div>
+                            {% else %}
+                                <p class="text-muted text-center my-3">No recent activity</p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 1.5rem;
+}
+.timeline-item {
+    position: relative;
+    padding-bottom: 1rem;
+    border-left: 2px solid #e9ecef;
+    padding-left: 1.5rem;
+}
+.timeline-item:before {
+    content: '';
+    position: absolute;
+    left: -0.4375rem;
+    top: 0.25rem;
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #007bff;
+}
+.card {
+    transition: transform 0.2s;
+}
+.card:hover {
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

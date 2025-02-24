@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-user-plus icon"></i>
+            <h1 class="title">Create Account</h1>
+            <p class="subtitle">Join Tutor Finder today</p>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="alert alert-warning">
+            {{ messages[0]}}. Go to <a href="{{ url_for('auth.login') }}">login page</a>.
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <form class="auth-form" method="POST" action="/signup">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-user"></i>
+                    </span>
+                    <input name="username" class="form-control" placeholder="Full Name" type="text" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-envelope"></i>
+                    </span>
+                    <input name="email" class="form-control" placeholder="Email" type="email" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                    <input name="password" class="form-control" placeholder="Password" type="password" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-phone"></i>
+                    </span>
+                    <input name="phone" class="form-control" placeholder="Phone Number" type="tel">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </span>
+                    <input name="address" class="form-control" placeholder="Address" type="text">
+                </div>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="is_tutor" name="is_tutor">
+                <label class="form-check-label" for="is_tutor">
+                    I want to register as a tutor
+                </label>
+            </div>
+
+            <div id="tutor_fields" style="display: none;">
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-book"></i>
+                        </span>
+                        <input name="subjects" class="form-control" placeholder="Subjects (comma separated)" type="text">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-dollar-sign"></i>
+                        </span>
+                        <input type="number" step="0.01" class="form-control" id="hourly_rate" name="hourly_rate" placeholder="Hourly Rate (₱)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-info-circle"></i>
+                        </span>
+                        <textarea name="bio" class="form-control" placeholder="Bio/Introduction" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-user-plus me-2"></i>Sign Up
+            </button>
+        </form>
+
+        <div class="auth-divider">
+            <span>or</span>
+        </div>
+
+        <div class="auth-footer">
+            <p>Already have an account? 
+                <a href="{{ url_for('auth.login') }}">Sign in</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('is_tutor').addEventListener('change', function() {
+    document.getElementById('tutor_fields').style.display = this.checked ? 'block' : 'none';
+});
+</script>
+{% endblock %}

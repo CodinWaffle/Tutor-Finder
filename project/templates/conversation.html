@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 col-12">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-header bg-white border-0">
+                    <div class="d-flex align-items-center">
+                        <a href="{{ url_for('main.messages') }}" class="btn btn-link text-dark p-0 me-3">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        <img src="{{ url_for('static', filename=other_user.profile_pic or 'default_profile.png') }}" 
+                             class="rounded-circle me-2" 
+                             style="width: 40px; height: 40px; object-fit: cover;">
+                        <h5 class="mb-0">{{ other_user.username }}</h5>
+                    </div>
+                </div>
+                
+                <div class="card-body" style="height: 400px; overflow-y: auto;" id="messageContainer">
+                    {% for message in messages %}
+                        <div class="message mb-3 {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %}">
+                            <div class="message-content p-3 rounded-3 {% if message.sender_id == current_user.id %}bg-primary text-white{% else %}bg-light{% endif %}">
+                                {{ message.content }}
+                                <div class="message-time small {% if message.sender_id == current_user.id %}text-white-50{% else %}text-muted{% endif %}">
+                                    {{ message.created_at.strftime('%H:%M') }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="card-footer bg-white border-0">
+                    <form id="messageForm" action="{{ url_for('main.send_message', recipient_id=other_user.id) }}" method="POST">
+                        <div class="input-group">
+                            <textarea class="form-control" name="message" placeholder="Type your message..." rows="1" required></textarea>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.message.sent {
+    text-align: right;
+}
+
+.message-content {
+    display: inline-block;
+    max-width: 70%;
+    position: relative;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+#messageContainer {
+    display: flex;
+    flex-direction: column;
+}
+
+.message {
+    margin-bottom: 1rem;
+}
+</style>
+
+<script>
+const messageContainer = document.getElementById('messageContainer');
+const messageForm = document.getElementById('messageForm');
+
+// Scroll to bottom of messages
+messageContainer.scrollTop = messageContainer.scrollHeight;
+
+// Handle form submission
+messageForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Add new message to container
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message sent mb-3';
+            messageDiv.innerHTML = `
+                <div class="message-content p-3 rounded-3 bg-primary text-white">
+                    ${data.message.content}
+                    <div class="message-time small text-white-50">
+                        ${data.message.created_at.split(' ')[1]}
+                    </div>
+                </div>
+            `;
+            messageContainer.appendChild(messageDiv);
+            
+            // Clear input and scroll to bottom
+            messageForm.reset();
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while sending the message');
+    });
+});
+</script>
+{% endblock %} 

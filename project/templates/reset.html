@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-key icon"></i>
+            <h1 class="title">Reset Password</h1>
+            <p class="subtitle">Enter your email to reset password</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'message' else 'danger' }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form class="auth-form" method="POST" action="{{ url_for('auth.reset') }}">
+            <div class="form-group">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-envelope"></i>
+                    </span>
+                    <input name="email" class="form-control" placeholder="Email address" type="email" required autofocus>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-paper-plane me-2"></i>Send Reset Link
+            </button>
+        </form>
+
+        <div class="auth-divider">
+            <span>or</span>
+        </div>
+
+        <div class="auth-footer">
+            <p>Remember your password? 
+                <a href="{{ url_for('auth.login') }}">Sign in</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
