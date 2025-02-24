@@ -56,7 +56,3 @@ A modern web application that connects students with tutors, built with Flask an
 - **File Handling**: Werkzeug
 - **Email Service**: Flask-Mail
 - **Additional Tools**: JWT, Flask-Migrate
-
-## Installation
-
-1. Clone the repository:
