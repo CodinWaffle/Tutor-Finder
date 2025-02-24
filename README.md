@@ -1,8 +1,7 @@
 # Tutor Finder Platform
 
 A modern web application that connects students with tutors, built with Flask and Bootstrap. The platform facilitates educational connections by allowing students to find tutors, manage learning materials, and communicate effectively.
-
-![Tutor Finder Platform](![Image](https://github.com/user-attachments/assets/f973b91a-7f96-40ba-a479-a6ebd61f53b3)
+![Image](https://github.com/user-attachments/assets/f973b91a-7f96-40ba-a479-a6ebd61f53b3)
 
 ![Image](https://github.com/user-attachments/assets/4cc3a4cb-de38-4161-9f82-fb936868f827)
 
@@ -20,7 +19,7 @@ A modern web application that connects students with tutors, built with Flask an
 
 ![Image](https://github.com/user-attachments/assets/feb4b485-b95a-43a7-a015-69163456027e)
 
-![Image](https://github.com/user-attachments/assets/29b3c4f0-02dc-4244-8f6e-bbba9c4a2b47)) <!-- You should add a screenshot of your application here -->
+![Image](https://github.com/user-attachments/assets/29b3c4f0-02dc-4244-8f6e-bbba9c4a2b47)
 
 ## Features
 
